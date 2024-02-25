@@ -1,0 +1,10 @@
+Schema can be added in schema section of APIM. In that case, schema-id is required in mid line
+Else ignore it and add schema in request definition of API Operation for validation.
+
+<!-- 
+Validating incoming message
+-->
+<validate-content unspecified-content-type-action="prevent" max-size="102400" size-exceeded-action="prevent" errors-variable-name="requestBodyValidation">
+    <content type="application/json" validate-as="json" action="prevent" />
+</validate-content>
+
