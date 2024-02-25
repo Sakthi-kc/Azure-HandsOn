@@ -1,0 +1,42 @@
+Step 1. A service principal has to be created and that principal needs to be provided “Contributor” and “Logic App Contributor” role in Logic app.
+
+Step 2. Generate token with the client id, secret, resource url
+
+Step 3. Call the URL and body as mentioned here. ClientID to be used within the body is the object id of the service principal.
+https://techcommunity.microsoft.com/t5/azure-integration-services-blog/trigger-workflows-in-standard-logic-apps-with-easy-auth/ba-p/3207378.
+
+This will enable easy auth in the standard logic app. Thus we can call the LA url without its SAS
+Eg: https://lap-swe-qbridge-logic-dev.azurewebsites.net:443/api/WF-WorkOrderOrchestratorFlow/triggers/When_a_HTTP_request_is_received/invoke?api-version=2022-05-01
+
+Step 4. Now we have to generate auth token from API to call the SLA workflow
+
+
+<!--
+  Fragment Name: Condition-Generate_LA_Token
+-->
+<fragment>
+    <cache-lookup-value key="BearerToken" variable-name="BearerToken" default-value="" />
+    <choose>
+        <when condition="@(context.Variables["BearerToken"]=="")">
+            <send-request mode="new" response-variable-name="Token" timeout="20" ignore-error="true">
+                <set-url>https://login.microsoftonline.com/{TenantID}/oauth2/token</set-url>
+                <set-method>POST</set-method>
+                <set-header name="Content-Type" exists-action="override">
+                    <value>application/x-www-form-urlencoded</value>
+                </set-header>
+                <set-body>@{
+                        return "grant_type=client_credentials&client_id={{ServicePrincipal-ClientID}}&client_secret={{ServicePrincipal-ClientSecret}}&resource=https://management.azure.com";
+                }</set-body>
+            </send-request>
+            <cache-store-value key="BearerToken" value="@("Bearer " + (string)((IResponse)context.Variables["Token"]).Body.As<JObject>(preserveContent: true)?["access_token"])" duration="3599" />
+            <set-variable name="BearerToken" value="@("Bearer " + (string)((IResponse)context.Variables["Token"]).Body.As<JObject>(preserveContent: true)?["access_token"])" />
+        </when>
+        <otherwise />
+    </choose>
+</fragment>
+<!-- 
+Calling Logic App
+-->
+<rewrite-uri template="{{LogicApp-WorkflowPath}}?api-version=2022-05-01" copy-unmatched-params="false" /> <!-- till /invoke -->
+<set-backend-service base-url="{{LogicAppURL}}" /> <!-- till net:443/api -->
+<include-fragment fragment-id="Condition-Generate_LA_Token" />
