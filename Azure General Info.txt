@@ -1,0 +1,3 @@
+1. To access keyvault value in named values of APIM or configuration of Logic app, access policies have to be granted for the APIM and Logic app.
+
+2.	Liquid condition is If..elsif..else
