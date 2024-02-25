@@ -1,0 +1,14 @@
+<!--
+  To convert JObject variable to JSON string
+-->
+<set-body>@{
+     JObject json = (JObject)context.Variables["CreateAssetReqBody"];
+     return JsonConvert.SerializeObject(json);
+}</set-body>
+
+<!--
+  Conditional statement and concatenation
+-->
+<set-variable name="Col-ToFilter" value="@(context.Request.Method == "GET" ? "SystemValue" : "CustomerValue")" />
+<set-variable name="FilterCondition" value="@(((string)context.Variables["Col-ToFilter"]) + "%20eq%20'" + ((string)context.Variables["Priority"]) + "'%20and%20SubsystemID%20eq%20'" + ((string)context.Variables["CustomerID"]) + "'%20and%20Type%20eq%20'" + ((string)context.Variables["Type"]))" />
+  
