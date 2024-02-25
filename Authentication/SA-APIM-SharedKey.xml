@@ -1,0 +1,43 @@
+<!-- Calling Storage Account from Azure APIM using shared key aunthentication -->
+
+
+<!--
+  CODE
+-->
+<set-variable name="presentTime" value="@(DateTime.UtcNow.ToString("R"))" />
+<set-variable name="getTableEntityToken" value="@{
+                var storage_account = {{StorageAccountName}};
+                var table = {{TableName}};
+                var access_key = {{SA_AccessKey}};
+                var canonicalized_headers = "\n/" + storage_account + "/" + table;
+                string[] stringToSignArray = {
+                                        // VERB
+                                        "GET",
+                                        // Content-MD5
+                                        "",
+                                        // Content-Type
+                                        "",
+                                        // Date
+                                        context.Variables.GetValueOrDefault<string>("presentTime"),
+                                        };
+                string stringToSign = String.Join("\n", stringToSignArray) + canonicalized_headers;
+                using (var encoder = new HMACSHA256(Convert.FromBase64String(access_key))) {
+                    var hash = encoder.ComputeHash(Encoding.UTF8.GetBytes(stringToSign));
+                    var signature = Convert.ToBase64String(hash);
+                    return signature;
+                }
+        }" />
+<set-header name="Authorization" exists-action="override">
+            <value>@( "SharedKey " + "{{StorageAccountName}}:" + context.Variables.GetValueOrDefault<string>("getTableEntityToken") )</value>
+</set-header>
+<set-header name="x-ms-date" exists-action="override">
+            <value>@( context.Variables.GetValueOrDefault<string>("presentTime") )</value>
+</set-header>
+<set-header name="x-ms-version" exists-action="override">
+            <value>2022-11-02</value>
+</set-header>
+<set-header name="Accept" exists-action="override">
+            <value>application/json;odata=nometadata</value>
+</set-header>
+<set-backend-service base-url="https://{{StorageAccountName}}.table.core.windows.net" />
+<rewrite-uri template="{{TableName}}" copy-unmatched-params="false" />
