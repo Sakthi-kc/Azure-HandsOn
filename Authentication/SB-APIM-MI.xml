@@ -1,0 +1,52 @@
+<!-- Calling Storage Account from Azure APIM using managed identity aunthentication -->
+
+
+<!-- 
+  ROLE
+--> 
+Azure Service Bus Data Sender role to be provided in Service Bus for the API. 
+<!--
+  CODE
+-->
+<!-- 
+    Calling service bus queue
+-->
+<set-backend-service backend-id="ServiceBus" />
+<rewrite-uri template="{{ServiceBus-Queue}}/messages" />
+<set-method>POST</set-method>
+<authentication-managed-identity resource="https://servicebus.azure.net" />
+<set-header name="Content-Type" exists-action="override">
+    <value>application/json</value>
+</set-header>
+<!--
+  Adding message properties to view in service bus explorer
+-->
+<set-header name="BrokerProperties" exists-action="override">
+    <value>@{
+    var json = new JObject();
+    json.Add("MessageId", context.RequestId);
+    json.Add("CorrelationId", (string)context.Variables["correlation-id"]);
+    return json.ToString(Newtonsoft.Json.Formatting.None);
+}</value>
+</set-header>
+<!--
+  Change the content of message before sending to service bus
+-->
+<set-body>@{
+  JObject json = context.Request.Body.As<JObject>(preserveContent: true);
+  json["href"] = json["href"] + "?ignorers=1&ignorecollectionref=1&_dropnulls=0&lean=1";
+  string RecordType = (string)json["record_type"];
+  switch (RecordType)
+  {
+      case "WO":
+        json["href"] = json["href"] + "&oslc.select={{ColumnNameHere}}";
+        break;
+      case "MATUSETRANS":
+        json["href"] = json["href"] + "&oslc.select={{ColumnNameHere}}";
+        break;
+      default:
+      json["href"] = json["href"];
+      break;
+  }
+  return JsonConvert.SerializeObject(json);
+}</set-body>
