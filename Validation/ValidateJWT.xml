@@ -1,0 +1,13 @@
+<!-- 
+Validating JWT token
+-->
+<validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized. Access token is missing or invalid.">
+      <openid-config url="{{ValidateJWT-ConfigURL}}" /> //B2C config URL
+      <audiences>
+          <audience>{{ValidateJWT-Audience-Client}}</audience>
+          <audience>{{ValidateJWT-Audience-Server}}</audience>
+      </audiences>
+      <issuers> //B2C login URL as issuer
+          <issuer>{{ValidateJWT-Issuer}}</issuer>
+      </issuers>
+</validate-jwt>
