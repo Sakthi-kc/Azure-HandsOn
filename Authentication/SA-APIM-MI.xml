@@ -1,0 +1,49 @@
+<!-- Calling Storage Account from Azure APIM using managed identity aunthentication -->
+
+
+<!-- 
+  ROLE
+--> 
+Storage Account Contributor Role to be provided in Storage Account for the API. 
+<!--
+  CODE
+-->
+<fragment>
+    <set-variable name="presentTime" value="@(DateTime.UtcNow.ToString("R"))" />
+    <!--
+        Call Storage account table and filter/ select required columns from the table
+    -->
+    <send-request mode="new" response-variable-name="Table-ResponseBody" timeout="20" ignore-error="false">
+        <set-url>@( "https://{{StorageAccountName}}.table.core.windows.net/" + ((string)context.Variables["TableName"]) + "?$filter=" + ((string)context.Variables["FilterCondition"]) + "'%20&$select=" + ((string)context.Variables["Col-ToSelect"]))</set-url>
+        <set-method>GET</set-method>
+        <set-header name="x-ms-date" exists-action="override">
+            <value>@( context.Variables.GetValueOrDefault<string>("presentTime") )</value>
+        </set-header>
+        <set-header name="x-ms-version" exists-action="override">
+            <value>2022-11-02</value>
+        </set-header>
+        <set-header name="Accept" exists-action="override">
+            <value>application/json;odata=nometadata</value>
+        </set-header>
+        <authentication-managed-identity resource="https://storage.azure.com" />
+    </send-request>
+    <set-variable name="Table-Response" value="@(((IResponse)context.Variables["Table-ResponseBody"]).Body.As<string>())" />
+    <!--
+      Response would come like {"value": ["Value1", "Value2"]}
+    -->
+    <set-variable name="TransformedValue" value="@{
+        JArray result = (JArray)(JObject.Parse((string)context.Variables["Table-Response"])["value"]);
+        string colToSelect = (string)context.Variables["Col-ToSelect"];
+        string checkTable = "{{StorageAccount-OrganizationMappingTableName}}";
+        if(context.Request.Method == "GET" && (string)context.Variables["TableName"]!=(string)checkTable) 
+        {
+            string[] expectedArray = result.Select(item => item[colToSelect].ToString()).Where(value => value != "DefaultValue").ToArray();
+            return string.Join(" or ", expectedArray);
+        }
+        else
+        {
+           return result[0][colToSelect].ToString();
+        }
+    }" />
+</fragment>
+
