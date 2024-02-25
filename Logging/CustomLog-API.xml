@@ -1,0 +1,28 @@
+<!--
+  Logging to trace in app insight
+-->
+<when condition="@(context.Response.StatusCode == 400)">
+    <!--
+      Trace in app insight
+  -->
+    <trace source="Global APIM Policy" severity="error">
+             <message>@(String.Format("{0} | {1}", context.Api.Name, context.Operation.Name))</message>
+             <metadata name="CorrelationId" value="@((string)context.Variables["correlation-id"])" />
+             <metadata name="SentTo" value="Maximo" />
+             <metadata name="Operation" value="@(context.Operation.Name)" />
+             <metadata name="ProductName" value="@(context.Api.Name)" />
+             <metadata name="SentFrom" value="@((string)context.Variables["CustomerID"])" />
+             <metadata name="Message" value="@(context.Response.Body.As<JObject>(preserveContent:true)["Error"]["message"]?.ToString())" />
+             <metadata name="Status_Code" value="@(context.Response.StatusCode.ToString())" />
+     </trace>
+    <!--
+      Returning response to caller
+    -->
+    <return-response>
+             <set-status code="400" reason="Request Error" />
+             <set-header name="content-type" exists-action="override">
+                 <value>application/json</value>
+             </set-header>
+             <set-body>@{ return new JObject(new JProperty("ErrorMessage", context.Response.Body.As<JObject>()["Error"]["message"]?.ToString()), new JProperty("Correlation-id", context.Variables["correlation-id"]))?.ToString();}</set-body>
+     </return-response>
+</when>
