@@ -1,3 +1,5 @@
 1. To access keyvault value in named values of APIM or configuration of Logic app, access policies have to be granted for the APIM and Logic app.
 
 2. Liquid condition is If..elsif..else
+
+3.  Modify variable value inside the policy expression is not possible. Context variable members are read-only as mentioned in docs, and this cannot be changed via expression.
