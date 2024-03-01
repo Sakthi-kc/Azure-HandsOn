@@ -2,4 +2,8 @@
 
 2. Liquid condition is If..elsif..else
 
-3.  Modify variable value inside the policy expression is not possible. Context variable members are read-only as mentioned in docs, and this cannot be changed via expression.
+3.  Modify variable value inside the policy expression is not possible. 
+    Context variable members are read-only as mentioned in docs, and this cannot be changed via expression.
+
+4. set-variable policy can assign a value either a string literal or using a policy expression.
+   The policy expression has access only to context variable and hence we cannot directly read backend URL specified using backend id.
