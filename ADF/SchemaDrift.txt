@@ -1,0 +1,6 @@
+SCHEMA DRIFT:
+  New columns coming into dataflow can be drifted. Enable "Allow schema drift" in source to read new columns that aren't defined in the definition.
+  This allows new data columns to pass till sink and default data type is 'string'. Enable "Infer drifted column type" to automatically infer data type.
+  
+  Similarly, enable "Allow schema drift" in sink to write new columns that are not defined in projection.
+  If this is enabled, make sure to enable "Auto mapping". To explictly map drifted columns, choose map drifted in data preview and use byPosition, byName expression.
