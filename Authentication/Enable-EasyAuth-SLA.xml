@@ -40,3 +40,6 @@ Calling Logic App
 <rewrite-uri template="{{LogicApp-WorkflowPath}}?api-version=2022-05-01" copy-unmatched-params="false" /> <!-- till /invoke -->
 <set-backend-service base-url="{{LogicAppURL}}" /> <!-- till net:443/api -->
 <include-fragment fragment-id="Condition-Generate_LA_Token" />
+<set-header name="Authorization">
+  <value>@(context.Variables["BearerToken"])</value>
+</set-header>
